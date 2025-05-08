@@ -1,5 +1,5 @@
-from flask import Blueprint, request, jsonify, current_app
-import bcrypt, pyotp, jwt
+from flask import Blueprint, request, jsonify, current_app, send_file
+import bcrypt, pyotp, jwt, qrcode, io
 from datetime import datetime, timedelta
 from pymongo import MongoClient
 
@@ -11,14 +11,17 @@ def get_mongo_client():
         client = MongoClient(current_app.config["MONGO_URI"])
     return client
 
-# Register a new user
+# 📝 Register a new user
 @auth_bp.route("/register", methods=["POST"])
 def register():
     data = request.json
-    username = data["username"]
-    password = data["password"]
+    username = data.get("username")
+    password = data.get("password")
 
-    client = get_mongo_client()  # Initialize MongoDB client inside the route
+    if not username or not password:
+        return jsonify({"error": "Username and password required"}), 400
+
+    client = get_mongo_client()
     db = client["zero_trust_db"]
     users_collection = db["users"]
 
@@ -32,21 +35,51 @@ def register():
         "username": username,
         "password_hash": password_hash,
         "mfa_secret": mfa_secret,
-        "role": "user"  # Default to user role
+        "role": "user"
     })
 
-    return jsonify({"message": "User registered", "mfa_secret": mfa_secret})
+    # Generate provisioning URI (for Google Authenticator)
+    totp = pyotp.TOTP(mfa_secret)
+    provisioning_uri = totp.provisioning_uri(name=username, issuer_name="ZeroTrustApp")
 
+    return jsonify({
+        "message": "User registered successfully",
+        "mfa_secret": mfa_secret,
+        "provisioning_uri": provisioning_uri  # Frontend can generate QR from this
+    }), 201
 
-# User login and JWT generation
+# ✅ Generate QR code (optional route for scanning in app)
+@auth_bp.route("/qr/<username>", methods=["GET"])
+def generate_qr(username):
+    client = get_mongo_client()
+    db = client["zero_trust_db"]
+    users_collection = db["users"]
+
+    user = users_collection.find_one({"username": username})
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    totp = pyotp.TOTP(user["mfa_secret"])
+    uri = totp.provisioning_uri(name=username, issuer_name="ZeroTrustApp")
+
+    img = qrcode.make(uri)
+    buf = io.BytesIO()
+    img.save(buf, format='PNG')
+    buf.seek(0)
+    return send_file(buf, mimetype='image/png')
+
+# 🔐 Login with OTP and return JWT
 @auth_bp.route("/login", methods=["POST"])
 def login():
     data = request.json
-    username = data["username"]
-    password = data["password"]
-    otp = data["otp"]
+    username = data.get("username")
+    password = data.get("password")
+    otp = data.get("otp")
 
-    client = get_mongo_client()  # Initialize MongoDB client inside the route
+    if not username or not password or not otp:
+        return jsonify({"error": "Username, password, and OTP required"}), 400
+
+    client = get_mongo_client()
     db = client["zero_trust_db"]
     users_collection = db["users"]
 
@@ -58,12 +91,10 @@ def login():
     if not totp.verify(otp):
         return jsonify({"error": "Invalid OTP"}), 401
 
-    # Create JWT token with expiration time of 5 minutes
     token = jwt.encode({
         "username": username,
         "role": user["role"],
-        "exp": datetime.utcnow() + timedelta(minutes=5)  # Token expires in 5 minutes
+        "exp": datetime.utcnow() + timedelta(minutes=5)
     }, current_app.config["JWT_SECRET_KEY"], algorithm="HS256")
 
-    return jsonify({"token": token})
-
+    return jsonify({"message": "Login successful", "token": token}), 200

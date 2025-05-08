@@ -10,7 +10,7 @@ class Config:
     # Optional: configure JWT expiration
     JWT_ACCESS_TOKEN_EXPIRES = 3600  # 1 hour
 
-    MONGO_URI = os.environ.get("MONGO_URI") or "mongodb+srv://sameekshamenda19:sameeksha@cluster0.g7lh6cg.mongodb.net/"
+    MONGO_URI = os.environ.get("MONGO_URI") or "mongodb+srv://sameeksa19:sameeksha@cluster0.2allbhh.mongodb.net/"
 
     # CORS settings if needed
     CORS_HEADERS = 'Content-Type'
