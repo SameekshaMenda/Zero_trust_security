@@ -1,7 +1,7 @@
 Flask
-Flask-Cors
-Flask-JWT-Extended
-pyotp
-bcrypt
+flask-cors
+flask-jwt-extended
 pymongo
-dnspython
+python-dotenv
+bcrypt
+pyotp
