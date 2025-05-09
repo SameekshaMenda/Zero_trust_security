@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>URL Security Scanner</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f8;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: #007bff;
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 40px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        #urlInput {
+            flex: 1;
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+
+        #scanBtn {
+            padding: 10px 16px;
+            font-size: 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        #scanBtn:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+
+        .report-buttons {
+            margin-top: 20px;
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .report-buttons button {
+            padding: 10px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #fff;
+            background-color: #007bff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        .report-buttons button:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+
+        .report-buttons button:active {
+            background-color: #00408d;
+            transform: scale(0.98);
+        }
+
+        .result-box {
+            margin-top: 30px;
+            padding: 15px;
+            border-radius: 6px;
+            background-color: #f8f9fa;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        }
+
+        .finding {
+            padding: 8px 12px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .good {
+            background-color: #e6ffed;
+            color: #257942;
+            border-left: 5px solid #28a745;
+        }
+
+        .bad {
+            background-color: #ffe6e6;
+            color: #a72828;
+            border-left: 5px solid #dc3545;
+        }
+
+        .warn {
+            background-color: #fff8e6;
+            color: #a97b00;
+            border-left: 5px solid #ffc107;
+        }
+    </style>
+</head>
+<body>
+
+<header>🔍 URL Security Scanner</header>
+
+<div class="container">
+    <div class="input-group">
+        <input type="text" id="urlInput" placeholder="Enter URL to scan...">
+        <button id="scanBtn" onclick="submitUrl()">Scan</button>
+    </div>
+
+    <!-- Display the results -->
+    <div id="resultContainer" class="result-box"></div>
+
+    <!-- Buttons to download or view report -->
+    <div id="reportLinks" class="report-buttons" style="display: none;">
+        <button id="viewBtn">View Report</button>
+        <button id="downloadBtn">Download Report</button>
+    </div>
+</div>
+
+<script>
+    function submitUrl() {
+        const url = document.getElementById('urlInput').value;
+        const resultContainer = document.getElementById('resultContainer');
+        const reportLinks = document.getElementById('reportLinks');
+        resultContainer.innerHTML = "🔄 Scanning... Please wait.";
+        reportLinks.style.display = "none";
+
+        if (!url) {
+            resultContainer.innerHTML = "❗ Please enter a valid URL.";
+            return;
+        }
+
+        const encodedUrl = encodeURIComponent(url);
+        const fullUrl = `http://127.0.0.1:5001/scan?url=${encodedUrl}`;
+
+        fetch(fullUrl)
+            .then(response => {
+                if (!response.ok) throw new Error("Network response was not ok");
+                return response.json();
+            })
+            .then(data => {
+                resultContainer.innerHTML = '';
+                data.report.forEach(item => {
+                    let div = document.createElement('div');
+                    div.classList.add('finding');
+                    if (item.includes('✔')) div.classList.add('good');
+                    if (item.includes('❌')) div.classList.add('bad');
+                    if (item.includes('⚠')) div.classList.add('warn');
+                    div.innerText = item;
+                    resultContainer.appendChild(div);
+                });
+
+                // Show download/view buttons and attach URLs
+                const filename = data.pdf_filename;
+                const viewBtn = document.getElementById('viewBtn');
+                const downloadBtn = document.getElementById('downloadBtn');
+                viewBtn.onclick = () => window.open(`http://127.0.0.1:5001/download/${filename}`, '_blank');
+                downloadBtn.onclick = () => window.location.href = `http://127.0.0.1:5001/download/${filename}`;
+                reportLinks.style.display = "flex";
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                resultContainer.innerHTML = "❌ Error occurred while scanning. Please try again.";
+            });
+    }
+</script>
+
+</body>
+</html>

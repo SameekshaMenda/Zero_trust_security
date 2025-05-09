@@ -47,7 +47,7 @@
         } else {
           alert('Login successful!');
           localStorage.setItem('token', result.token); // Save JWT token
-          window.location.href = 'dashboard.html';
+          window.location.href = 'scanner.html';
         }
       } catch (err) {
         errorBox.textContent = 'Something went wrong.';

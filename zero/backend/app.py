@@ -22,7 +22,7 @@ app.register_blueprint(auth_bp)  # This is where you register the blueprint
 
 # MongoDB setup
 mongo_client = MongoClient(app.config['MONGO_URI'])
-db = mongo_client.get_database('zero_auth')  # Specify your database name
+db = mongo_client.get_database('zero_trust_db')  # Specify your database name
   # This uses the database name from the URI
 users_collection = db['users']
 
