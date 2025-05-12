@@ -111,6 +111,8 @@ def generate_qr(username):
 
 # 🔑 Login with OTP and get JWT
 
+from flask import session
+
 @auth_bp.route("/login", methods=["POST"])
 def login():
     try:
@@ -133,6 +135,9 @@ def login():
         if not verify_totp(user["mfa_secret"], otp):
             return jsonify({"error": "Invalid OTP"}), 401
 
+        # Store the username in the session
+        session['username'] = username
+
         # Create token with proper datetime usage
         token = create_access_token(
             identity=username,
@@ -141,15 +146,14 @@ def login():
                 "fresh": True
             }
         )
-        print(f"Generated token: {token}")
-        response_data = {
-         "message": "Login successful",
-         "role": user["role"],
-         "username": username,
-         "redirect": "admin_dashboard.html" if user["role"] == "admin" else "user_dashboard.html",
-         "token": token  # Ensure token is include      here
-        }
 
+        response_data = {
+            "message": "Login successful",
+            "role": user["role"],
+            "username": username,
+            "redirect": "admin_dashboard.html" if user["role"] == "admin" else "user_dashboard.html",
+            "token": token  # Ensure token is included here
+        }
 
         response = make_response(jsonify(response_data))
         response.set_cookie(
@@ -162,14 +166,12 @@ def login():
             path='/',
         )
 
-        # Debug log
-        print(f"Token set: {token}")
         return response
 
     except Exception as e:
         print("Login error:", str(e))  # More detailed error logging
         return jsonify({"error": "Internal server error"}), 500
-    
+
 
 @auth_bp.route("/debug/token", methods=["GET"])
 def debug_token():

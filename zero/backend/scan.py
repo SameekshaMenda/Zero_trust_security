@@ -7,6 +7,13 @@ from urllib.parse import urlparse
 from datetime import datetime
 from scanner.scanner import run_all_scans
 from scanner.report_generator import generate_html_report, save_pdf
+from pymongo import MongoClient
+
+# MongoDB setup
+MONGO_URI = os.getenv("MONGO_URI", "mongodb+srv://sameeksa19:sameeksha@cluster0.2allbhh.mongodb.net/")
+client = MongoClient(MONGO_URI)
+db = client["scanner"]
+scans_collection = db["inputs"]
 
 # Load environment variables
 load_dotenv()
@@ -18,6 +25,7 @@ REPORT_PATH = os.path.join("reports", "generated", "report.pdf")
 
 @app.route('/view-report', methods=['POST'])
 def view_report():
+    print("Received method:", request.method)
     data = request.json
     url = data.get("url")
     if not url:
@@ -27,6 +35,16 @@ def view_report():
     hostname = parsed_url.netloc
     findings = run_all_scans(url, hostname)
     html = generate_html_report(url, findings)
+    
+    # Store scan in database
+    scan_record = {
+        "url": url,
+        "hostname": hostname,
+        "findings": findings,
+        "timestamp": datetime.utcnow()
+    }
+    scans_collection.insert_one(scan_record)
+
 
     return jsonify({'html': html, 'findings': findings, 'url': url})
 
