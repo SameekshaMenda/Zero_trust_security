@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-gray-100">
+    <div class="flex items-center justify-center min-h-screen">
+        <div class="bg-white p-8 rounded-lg shadow-lg w-96">
+            <h2 class="text-2xl font-semibold text-center mb-6">Employee Dashboard</h2>
+            <p class="text-center">Welcome to the Employee Dashboard! You have limited access.</p>
+            <a href="/logout" class="block text-center mt-4 text-blue-500">Logout</a>
+        </div>
+    </div>
+
+<script>
+    function checkSession() {
+        fetch("http://127.0.0.1:5000/api/user_dashboard_data", {
+            method: "GET",
+            credentials: "include"
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Session expired");
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log("User is still logged in:", data);
+            })
+            .catch(err => {
+                alert("Session expired: " + err.message);
+                window.location.href = "login.html";
+            });
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+        checkSession();
+
+        document.getElementById("logout").addEventListener("click", (e) => {
+            e.preventDefault();
+            fetch("http://127.0.0.1:5000/logout", {
+                method: "POST",
+                credentials: "include"
+            }).then(() => {
+                window.location.replace("login.html");
+            });
+        });
+
+        // Prevent back button after logout
+        window.history.pushState(null, "", window.location.href);
+        window.onpopstate = function () {
+            window.history.pushState(null, "", window.location.href);
+        };
+
+        // Verify token immediately
+        checkTokenValidity();
+        
+        async function checkTokenValidity() {
+            try {
+                const response = await fetch('/auth/debug/token', {
+                    credentials: 'include'  // Important for cookies
+                });
+
+                if (!response.ok) {
+                    throw new Error('Token invalid');
+                }
+
+                const data = await response.json();
+                console.log('Token info:', data);
+
+                // Update UI with remaining time
+                if (data.seconds_remaining) {
+                    const minutes = Math.floor(data.seconds_remaining / 60);
+                    const seconds = Math.floor(data.seconds_remaining % 60);
+                    document.getElementById('session-timer').textContent =
+                        `Session expires in: ${minutes}m ${seconds}s`;
+                }
+            } catch (error) {
+                console.error('Session check failed:', error);
+                window.location.href = '/?session_expired=1';
+            }
+        }
+
+        // Check every 30 seconds
+        setInterval(checkTokenValidity, 30000);
+
+        // Check every minute
+        setInterval(checkSession, 60000);
+
+        // Check session every minute
+        setInterval(checkSession, 60000);
+    });
+</script>
+
+
+</body>
+
+</html>

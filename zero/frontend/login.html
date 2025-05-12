@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Login</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
+
 <body class="flex items-center justify-center min-h-screen bg-gray-50 font-sans">
   <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md border border-gray-200">
     <!-- Logo or Title -->
@@ -19,10 +21,10 @@
         class="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
       <input type="password" id="password" placeholder="Password" required
         class="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
-      <input type="text" id="otp" placeholder="OTP from Authenticator" required
+      <input type="text" id="otp" placeholder="Enter 6-digit OTP from Authenticator" required
         class="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
-      
-      <button type="submit"
+
+      <button type="submit" id="loginBtn"
         class="w-full bg-blue-600 text-white py-3 rounded-md hover:bg-blue-700 transition duration-200">
         Log In
       </button>
@@ -47,41 +49,50 @@
     </div>
   </div>
 
-  <script>
-    const form = document.getElementById('loginForm');
-    const errorBox = document.getElementById('error');
+ <script>
+  const form = document.getElementById('loginForm');
+  const errorBox = document.getElementById('error');
+  const loginBtn = document.getElementById('loginBtn');
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      errorBox.classList.add('hidden');
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errorBox.classList.add('hidden');
+    loginBtn.disabled = true;
+    loginBtn.textContent = 'Logging in...';
 
-      const username = document.getElementById('username').value;
-      const password = document.getElementById('password').value;
-      const otp = document.getElementById('otp').value;
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+    const otp = document.getElementById('otp').value;
 
-      try {
-        const response = await fetch('http://localhost:5000/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password, otp })
-        });
+    try {
+      const response = await fetch('http://127.0.0.1:5000/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password, otp }),
+        credentials: 'include' // Important for cookies
+      });
 
-        const result = await response.json();
+      const data = await response.json();
 
-        if (!response.ok) {
-          errorBox.textContent = result.msg || 'Login failed';
-          errorBox.classList.remove('hidden');
-        } else {
-          alert('Login successful!');
-          localStorage.setItem('token', result.token);
-          window.location.href = 'scanner.html';
-        }
-      } catch (err) {
-        errorBox.textContent = 'Something went wrong.';
-        errorBox.classList.remove('hidden');
-        console.error(err);
+      if (!response.ok) {
+        throw new Error(data.error || 'Login failed');
       }
-    });
-  </script>
+
+      // Debug: log the response
+      console.log("Login successful, redirecting to:", data.redirect);
+
+      // Force redirect - don't rely on the response.redirect
+      window.location.href = data.redirect;
+    } catch (err) {
+      console.error('Login error:', err);
+      errorBox.textContent = err.message;
+      errorBox.classList.remove('hidden');
+      loginBtn.disabled = false;
+      loginBtn.textContent = 'Log In';
+    }
+  });
+</script>
+
 </body>
+
 </html>
