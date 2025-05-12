@@ -4,4 +4,4 @@ flask-jwt-extended
 pymongo
 python-dotenv
 bcrypt
-pyotp
+

@@ -2,102 +2,125 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Employee Dashboard</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+    <p id="session-timer" class="text-center mt-2 text-red-500 font-semibold"></p>
 </head>
 
 <body class="bg-gray-100">
     <div class="flex items-center justify-center min-h-screen">
-        <div class="bg-white p-8 rounded-lg shadow-lg w-96">
-            <h2 class="text-2xl font-semibold text-center mb-6">Employee Dashboard</h2>
-            <p class="text-center">Welcome to the Employee Dashboard! You have limited access.</p>
-            <a href="/logout" class="block text-center mt-4 text-blue-500">Logout</a>
+        <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-2xl">
+            <h2 class="text-2xl font-semibold text-center mb-6">User Dashboard</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
+                <!-- Box 1 -->
+                <a href="scan.html"
+                    class="block bg-blue-100 hover:bg-blue-200 rounded-lg p-6 text-center shadow-md transition">
+                    <div class="text-4xl mb-2">🔍</div>
+                    <div class="text-lg font-semibold">Scan Project</div>
+                </a>
+
+                <!-- Box 2 -->
+                <a href="history.html"
+                    class="block bg-green-100 hover:bg-green-200 rounded-lg p-6 text-center shadow-md transition">
+                    <div class="text-4xl mb-2">📄</div>
+                    <div class="text-lg font-semibold">Scan History</div>
+                </a>
+
+                <!-- Box 3 -->
+                <a href="device.html"
+                    class="block bg-yellow-100 hover:bg-yellow-200 rounded-lg p-6 text-center shadow-md transition">
+                    <div class="text-4xl mb-2">🔐</div>
+                    <div class="text-lg font-semibold">Device Check</div>
+                </a>
+
+            </div>
+
+            <a href="#" id="logout" class="block text-center mt-6 text-red-500 hover:underline">Logout</a>
         </div>
     </div>
 
-<script>
-    function checkSession() {
-        fetch("http://127.0.0.1:5000/api/user_dashboard_data", {
-            method: "GET",
-            credentials: "include"
-        })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error("Session expired");
+    <script>
+        function checkSession() {
+            const token = localStorage.getItem("token");  // Example using localStorage
+
+            fetch("http://127.0.0.1:5000/api/user_dashboard_data", {
+                method: "GET",
+                headers: {
+                    'Authorization': `Bearer ${token}`,
                 }
-                return response.json();
+
             })
-            .then(data => {
-                console.log("User is still logged in:", data);
-            })
-            .catch(err => {
-                alert("Session expired: " + err.message);
-                window.location.href = "login.html";
-            });
-    }
-
-    window.addEventListener("DOMContentLoaded", () => {
-        checkSession();
-
-        document.getElementById("logout").addEventListener("click", (e) => {
-            e.preventDefault();
-            fetch("http://127.0.0.1:5000/logout", {
-                method: "POST",
-                credentials: "include"
-            }).then(() => {
-                window.location.replace("login.html");
-            });
-        });
-
-        // Prevent back button after logout
-        window.history.pushState(null, "", window.location.href);
-        window.onpopstate = function () {
-            window.history.pushState(null, "", window.location.href);
-        };
-
-        // Verify token immediately
-        checkTokenValidity();
-        
-        async function checkTokenValidity() {
-            try {
-                const response = await fetch('/auth/debug/token', {
-                    credentials: 'include'  // Important for cookies
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error("Session expired");
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log("User is still logged in:", data);
+                })
+                .catch(err => {
+                    alert("Session expired: " + err.message);
+                    window.location.href = "login.html";
                 });
-
-                if (!response.ok) {
-                    throw new Error('Token invalid');
-                }
-
-                const data = await response.json();
-                console.log('Token info:', data);
-
-                // Update UI with remaining time
-                if (data.seconds_remaining) {
-                    const minutes = Math.floor(data.seconds_remaining / 60);
-                    const seconds = Math.floor(data.seconds_remaining % 60);
-                    document.getElementById('session-timer').textContent =
-                        `Session expires in: ${minutes}m ${seconds}s`;
-                }
-            } catch (error) {
-                console.error('Session check failed:', error);
-                window.location.href = '/?session_expired=1';
-            }
         }
 
-        // Check every 30 seconds
-        setInterval(checkTokenValidity, 30000);
+        window.addEventListener("DOMContentLoaded", () => {
+            checkSession();
 
-        // Check every minute
-        setInterval(checkSession, 60000);
+            document.getElementById("logout").addEventListener("click", (e) => {
+                e.preventDefault();
+                fetch("http://127.0.0.1:5000/logout", {
+                    method: "POST",
+                    credentials: "include"
+                }).then(() => {
+                    window.location.replace("login.html");
+                });
+            });
 
-        // Check session every minute
-        setInterval(checkSession, 60000);
-    });
-</script>
+            window.history.pushState(null, "", window.location.href);
+            window.onpopstate = function () {
+                window.history.pushState(null, "", window.location.href);
+            };
+
+            checkTokenValidity();
+
+            async function checkTokenValidity() {
+                const token = localStorage.getItem("token"); // Assuming token is stored in localStorage
+
+                if (!token) {
+                    console.error("No token found.");
+                    return;
+                }
+
+                try {
+                    const response = await fetch('http://127.0.0.1:5000/auth/debug/token', {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`, // Add token to Authorization header
+                        },
+                    });
+
+                    const data = await response.json();
+                    if (response.ok) {
+                        console.log('Token is valid:', data);
+                    } else {
+                        console.error('Token validation failed:', data);
+                    }
+                } catch (err) {
+                    console.error('Error while checking token validity:', err);
+                }
+            }
 
 
+
+            setInterval(checkTokenValidity, 30000);
+            setInterval(checkSession, 60000);
+        });
+    </script>
 </body>
 
 </html>

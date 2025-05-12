@@ -13,18 +13,26 @@ from pymongo import MongoClient
 from config import Config
 from dotenv import load_dotenv
 from routes.auth_routes import auth_bp
-from jwt import ExpiredSignatureError
 import datetime
 from datetime import timedelta
+from flask import session,jsonify
+import jwt as pyjwt
+from jwt import ExpiredSignatureError, InvalidTokenError
 
 import os
 from utils import jwt_required_cookie
 
-load_dotenv()
 
+client = MongoClient("mongodb+srv://sameeksa19:sameeksha@cluster0.2allbhh.mongodb.net/")
+db = client.get_database("zero_trust_db")  # Replace with your actual database name
+users_collection = db.users 
+
+
+load_dotenv()
 app = Flask(__name__, static_folder='../frontend')
 app.config.from_object(Config)
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(minutes=5)  # 5 minute expiration
+CORS(app, origins=["http://127.0.0.1:8000"],supports_credentials=True) 
 
 # JWT setup
 jwt = JWTManager(app)
@@ -124,28 +132,47 @@ def missing_token_callback(error):
         "message": "You need to be logged in to access this."
     }), 401
 
+
+def get_user_data_from_db(user_id):
+    # Fetch user data from MongoDB collection
+    user_data = users_collection.find_one({"_id": user_id})  # Assuming the user_id is stored as _id
+    
+    if user_data:
+        return {
+            "user_id": user_data["_id"],
+            "name": user_data["name"],
+            "email": user_data["email"],
+            "profile_picture": user_data.get("profile_picture", "default.jpg")  # Optional
+        }
+    else:
+        return {"message": "User not found!"}
+    
+
+
 @app.route('/api/user_dashboard_data', methods=['GET'])
-def get_dashboard_data():
+def user_dashboard_data():
     token = request.headers.get('Authorization')
     
     if not token:
         return jsonify({'message': 'Token is missing!'}), 401
 
     try:
-        # Remove "Bearer " from token if present
-        token = token.split()[1]
-        decoded_token = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
-        user_id = decoded_token['user_id']  # Assuming user_id is in the token
-        
-        # Now you can use user_id to fetch the user's dashboard data
-        user_data = get_user_data_from_db(user_id)  # Example function to fetch data
-        
+        # Remove "Bearer " if present
+        token = token.split()[1] if " " in token else token
+        decoded_token = pyjwt.decode(token, app.config["JWT_SECRET_KEY"], algorithms=['HS256'])
+        user_id = decoded_token['sub']
+
+        print(decoded_token)
+
+        user_data = get_user_data_from_db(user_id)  # Your own function
         return jsonify(user_data)
     
-    except jwt.ExpiredSignatureError:
+    except ExpiredSignatureError:
         return jsonify({'message': 'Token expired!'}), 401
-    except jwt.InvalidTokenError:
+    except InvalidTokenError:
         return jsonify({'message': 'Invalid token!'}), 401
+
+
 
 
 if __name__ == "__main__":

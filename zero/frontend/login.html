@@ -49,50 +49,56 @@
     </div>
   </div>
 
- <script>
-  const form = document.getElementById('loginForm');
-  const errorBox = document.getElementById('error');
-  const loginBtn = document.getElementById('loginBtn');
+  <script>
+    const form = document.getElementById('loginForm');
+    const errorBox = document.getElementById('error');
+    const loginBtn = document.getElementById('loginBtn');
 
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    errorBox.classList.add('hidden');
-    loginBtn.disabled = true;
-    loginBtn.textContent = 'Logging in...';
+    form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  errorBox.classList.add('hidden');
+  loginBtn.disabled = true;
+  loginBtn.textContent = 'Logging in...';
 
-    const username = document.getElementById('username').value;
-    const password = document.getElementById('password').value;
-    const otp = document.getElementById('otp').value;
+  const username = document.getElementById('username').value;
+  const password = document.getElementById('password').value;
+  const otp = document.getElementById('otp').value;
 
-    try {
-      const response = await fetch('http://127.0.0.1:5000/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password, otp }),
-        credentials: 'include' // Important for cookies
-      });
+  try {
+    const response = await fetch('http://127.0.0.1:5000/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password, otp }),
+      credentials: 'include' // Important for cookies, though now the token is in the body
+    });
 
-      const data = await response.json();
+    const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Login failed');
-      }
-
-      // Debug: log the response
-      console.log("Login successful, redirecting to:", data.redirect);
-
-      // Force redirect - don't rely on the response.redirect
-      window.location.href = data.redirect;
-    } catch (err) {
-      console.error('Login error:', err);
-      errorBox.textContent = err.message;
-      errorBox.classList.remove('hidden');
-      loginBtn.disabled = false;
-      loginBtn.textContent = 'Log In';
+    if (!response.ok) {
+      throw new Error(data.error || 'Login failed');
     }
-  });
-</script>
 
+    // Check for token in response body and store in localStorage
+    if (data.token) {
+      localStorage.setItem("token", data.token); // Store token in localStorage
+      console.log("Token stored in localStorage:", data.token);
+    } else {
+      throw new Error("Token missing from response");
+    }
+
+    // Redirect user
+    window.location.href = data.redirect;
+
+  } catch (err) {
+    console.error('Login error:', err);
+    errorBox.textContent = err.message;
+    errorBox.classList.remove('hidden');
+    loginBtn.disabled = false;
+    loginBtn.textContent = 'Log In';
+  }
+});
+
+  </script>
 </body>
 
 </html>

@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify, current_app, send_file, jsonify, current_app, make_response
 import bcrypt, jwt, qrcode, io, base64, hmac, hashlib, time, os
-from datetime import datetime, timedelta
+from datetime import timedelta
+import datetime
 from pymongo import MongoClient
 from qr_utils import generate_qr_code, build_otp_uri
 # from flask_jwt_extended import decode_token, get_jwt_identity
@@ -15,6 +16,7 @@ from flask_jwt_extended import (
     get_jwt_identity,
     get_jwt
 )
+
 from utils import jwt_required_cookie
 
 auth_bp = Blueprint('auth', __name__)
@@ -139,13 +141,15 @@ def login():
                 "fresh": True
             }
         )
-
+        print(f"Generated token: {token}")
         response_data = {
-            "message": "Login successful",
-            "role": user["role"],
-            "username": username,
-            "redirect": "admin_dashboard.html" if user["role"] == "admin" else "user_dashboard.html"
+         "message": "Login successful",
+         "role": user["role"],
+         "username": username,
+         "redirect": "admin_dashboard.html" if user["role"] == "admin" else "user_dashboard.html",
+         "token": token  # Ensure token is include      here
         }
+
 
         response = make_response(jsonify(response_data))
         response.set_cookie(
@@ -169,11 +173,12 @@ def login():
 
 @auth_bp.route("/debug/token", methods=["GET"])
 def debug_token():
-    token = request.cookies.get("token")
-    if not token:
-        return jsonify({"error": "No token found"}), 401
-    
+    auth_header = request.headers.get("Authorization")
+    if not auth_header:
+        return jsonify({"error": "No token found in Authorization header"}), 401
+
     try:
+        token = auth_header.split()[1]  # Extract the token from "Bearer <token>"
         decoded = jwt.decode(token, current_app.config["JWT_SECRET_KEY"], algorithms=["HS256"])
         now = datetime.datetime.utcnow()
         expires = datetime.datetime.fromtimestamp(decoded["exp"])
@@ -188,6 +193,8 @@ def debug_token():
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 401
+
+
 
 @auth_bp.route("/debug/time", methods=["GET"])
 def debug_time():
@@ -314,5 +321,4 @@ def app_config():
         "JWT_SECRET_KEY": current_app.config["JWT_SECRET_KEY"] is not None,
         "JWT_ACCESS_TOKEN_EXPIRES": str(current_app.config.get("JWT_ACCESS_TOKEN_EXPIRES"))
     })    
-
 

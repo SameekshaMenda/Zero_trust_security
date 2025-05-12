@@ -15,3 +15,8 @@ class Config:
 
     # CORS settings if needed
     CORS_HEADERS = 'Content-Type'
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=5)  # 5 minutes
+    JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)  # 30 days
+    JWT_COOKIE_SECURE = False  # Set to True in production
+    JWT_TOKEN_LOCATION = ['cookies']
+    JWT_COOKIE_CSRF_PROTECT = True
