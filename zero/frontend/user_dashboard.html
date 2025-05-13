@@ -4,54 +4,144 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Employee Dashboard</title>
+    <title>API Vulnerability Scanner</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
-    <p id="session-timer" class="text-center mt-2 text-red-500 font-semibold"></p>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #BBFBFF 0%, #8DD8FF 50%, #4E71FF 100%);
+        }
+        
+        .scanner-card {
+            transition: all 0.3s ease;
+            transform: translateY(0);
+        }
+        
+        .scanner-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+        
+        .progress-bar {
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        
+        .progress {
+            height: 100%;
+            background: linear-gradient(90deg, #4E71FF, #5409DA);
+            transition: width 1s linear;
+        }
+    </style>
 </head>
 
-<body class="bg-gray-100">
-    <div class="flex items-center justify-center min-h-screen">
-        <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-2xl">
-            <h2 class="text-2xl font-semibold text-center mb-6">User Dashboard</h2>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-
-                <!-- Box 1 -->
-                <a href="scan.html"
-                    class="block bg-blue-100 hover:bg-blue-200 rounded-lg p-6 text-center shadow-md transition">
-                    <div class="text-4xl mb-2">🔍</div>
-                    <div class="text-lg font-semibold">Scan Project</div>
-                </a>
-
-                <!-- Box 2 -->
-                <a href="history.html"
-                    class="block bg-green-100 hover:bg-green-200 rounded-lg p-6 text-center shadow-md transition">
-                    <div class="text-4xl mb-2">📄</div>
-                    <div class="text-lg font-semibold">Scan History</div>
-                </a>
-
-                <!-- Box 3 -->
-                <a href="device.html"
-                    class="block bg-yellow-100 hover:bg-yellow-200 rounded-lg p-6 text-center shadow-md transition">
-                    <div class="text-4xl mb-2">🔐</div>
-                    <div class="text-lg font-semibold">Device Check</div>
-                </a>
-
+<body class="min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header Section -->
+        <header class="flex justify-between items-center mb-12">
+            <div>
+                <h1 class="text-3xl font-bold text-indigo-900">API Vulnerability Scanner</h1>
+                <p class="text-indigo-700">Enterprise-grade API security testing</p>
             </div>
+            <div class="text-right">
+                <div class="progress-bar w-32 mb-1">
+                    <div id="session-progress" class="progress"></div>
+                </div>
+                <p id="session-timer" class="text-red-500 font-semibold text-sm"></p>
+                <a href="#" id="logout" class="text-indigo-900 hover:underline font-medium text-sm">Logout</a>
+            </div>
+        </header>
 
-            <a href="#" id="logout" class="block text-center mt-6 text-red-500 hover:underline">Logout</a>
+        <!-- Main Scanner Card -->
+        <div class="max-w-3xl mx-auto">
+            <div class="scanner-card pulse-animation bg-white bg-opacity-95 rounded-xl p-8 shadow-2xl border-l-4 border-indigo-600">
+                <div class="flex flex-col items-center text-center">
+                    <div class="p-5 rounded-full bg-indigo-100 mb-6">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
+                    </div>
+                    <h2 class="text-2xl font-bold text-indigo-900 mb-4">Scan Your API Endpoints</h2>
+                    <p class="text-gray-600 mb-6 max-w-lg">
+                        Detect security vulnerabilities in your API before attackers do. Our scanner tests for OWASP Top 10 API security risks automatically.
+                    </p>
+                    
+                    <div class="w-full mb-8">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
+                            <div class="bg-indigo-50 p-4 rounded-lg flex items-start">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500 mt-1 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                </svg>
+                                <div>
+                                    <div class="font-semibold">Comprehensive Tests</div>
+                                    <p class="text-sm text-gray-600">150+ vulnerability checks including SQLi, XSS, IDOR</p>
+                                </div>
+                            </div>
+                            <div class="bg-indigo-50 p-4 rounded-lg flex items-start">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500 mt-1 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                </svg>
+                                <div>
+                                    <div class="font-semibold">Detailed Reports</div>
+                                    <p class="text-sm text-gray-600">Prioritized findings with remediation guidance</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <a href="scan.html" class="w-full max-w-md px-8 py-3 bg-gradient-to-r from-indigo-600 to-indigo-800 text-white rounded-lg hover:from-indigo-700 hover:to-indigo-900 transition font-semibold text-lg shadow-md">
+                        Start New Scan
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Quick Start Guide -->
+            <div class="mt-12 bg-white bg-opacity-95 rounded-xl p-6 shadow-md">
+                <h3 class="text-xl font-bold text-indigo-900 mb-4">Getting Started</h3>
+                <ol class="list-decimal list-inside space-y-3 text-gray-700">
+                    <li class="pb-2 border-b border-gray-100">
+                        <span class="font-semibold">Prepare your API</span> - Ensure your test environment is ready
+                    </li>
+                    <li class="pb-2 border-b border-gray-100">
+                        <span class="font-semibold">Configure scan settings</span> - Select test depth and vulnerability types
+                    </li>
+                    <li class="pb-2">
+                        <span class="font-semibold">Review results</span> - Analyze findings and implement fixes
+                    </li>
+                </ol>
+            </div>
         </div>
     </div>
 
     <script>
         function checkSession() {
-            const token = localStorage.getItem("token");  // Example using localStorage
+            const token = localStorage.getItem("token");
 
             fetch("http://127.0.0.1:5000/api/user_dashboard_data", {
                 method: "GET",
                 headers: {
                     'Authorization': `Bearer ${token}`,
                 }
-
             })
                 .then(response => {
                     if (!response.ok) {
@@ -89,8 +179,7 @@
             checkTokenValidity();
 
             async function checkTokenValidity() {
-                const token = localStorage.getItem("token"); // Assuming token is stored in localStorage
-
+                const token = localStorage.getItem("token");
                 if (!token) {
                     console.error("No token found.");
                     return;
@@ -100,7 +189,7 @@
                     const response = await fetch('http://127.0.0.1:5000/auth/debug/token', {
                         method: 'GET',
                         headers: {
-                            'Authorization': `Bearer ${token}`, // Add token to Authorization header
+                            'Authorization': `Bearer ${token}`,
                         },
                     });
 
@@ -115,10 +204,34 @@
                 }
             }
 
-
-
             setInterval(checkTokenValidity, 30000);
             setInterval(checkSession, 60000);
+            
+            // 5-minute session timer
+            const sessionDuration = 300; // 5 minutes in seconds
+            let timeLeft = sessionDuration;
+            const timerElement = document.getElementById('session-timer');
+            const progressBar = document.getElementById('session-progress');
+            
+            const updateTimer = () => {
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+                timerElement.textContent = `Session: ${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+                
+                // Update progress bar
+                const progressPercent = (timeLeft / sessionDuration) * 100;
+                progressBar.style.width = `${progressPercent}%`;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    window.location.href = "login.html";
+                } else {
+                    timeLeft--;
+                }
+            };
+            
+            updateTimer();
+            const timerInterval = setInterval(updateTimer, 1000);
         });
     </script>
 </body>

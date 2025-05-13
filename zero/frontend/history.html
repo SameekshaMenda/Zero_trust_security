@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Scan History</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen p-6">
+  <div class="max-w-4xl mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
+    <div class="px-6 py-4 border-b">
+      <h1 class="text-2xl font-bold">🕑 Your Scan History</h1>
+    </div>
+    <div class="p-6">
+      <table class="w-full table-auto">
+        <thead class="bg-gray-200">
+          <tr>
+            <th class="px-4 py-2">Scanned URL</th>
+            <th class="px-4 py-2">Date</th>
+            <th class="px-4 py-2">Findings</th>
+          </tr>
+        </thead>
+        <tbody id="historyBody">
+          <!-- JS will inject rows here -->
+        </tbody>
+      </table>
+      <p id="noReports" class="text-center text-gray-500 mt-4 hidden">
+        No past scans found.
+      </p>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+      if (!token) {
+        alert('Please log in to view your history.');
+        window.location.href = 'login.html';
+        return;
+      }
+
+      try {
+        const resp = await fetch('http://127.0.0.1:5000/history', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (!resp.ok) {
+          if (resp.status === 401) {
+            alert('Session expired, please log in again.');
+            window.location.href = 'login.html';
+          }
+          throw new Error('Failed to fetch history');
+        }
+        const { reports } = await resp.json();
+        const tbody = document.getElementById('historyBody');
+        if (reports.length === 0) {
+          document.getElementById('noReports').classList.remove('hidden');
+        } else {
+          reports.forEach(r => {
+            const tr = document.createElement('tr');
+            tr.classList.add('border-b');
+            // URL cell
+            const urlTd = document.createElement('td');
+            urlTd.className = 'px-4 py-2 break-words';
+            urlTd.textContent = r.url;
+            // Date cell
+            const dateTd = document.createElement('td');
+            dateTd.className = 'px-4 py-2';
+            dateTd.textContent = new Date(r.timestamp).toLocaleString();
+            // Findings cell with collapsible details
+            const findTd = document.createElement('td');
+            findTd.className = 'px-4 py-2';
+            const details = document.createElement('details');
+            const summary = document.createElement('summary');
+            summary.textContent = `View ${r.findings.length} item(s)`;
+            details.appendChild(summary);
+            const ul = document.createElement('ul');
+            ul.className = 'list-disc list-inside text-sm mt-2';
+            r.findings.forEach(f => {
+              const li = document.createElement('li');
+              li.textContent = f;
+              ul.appendChild(li);
+            });
+            details.appendChild(ul);
+            findTd.appendChild(details);
+
+            tr.append(urlTd, dateTd, findTd);
+            tbody.appendChild(tr);
+          });
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Error loading history.');
+      }
+    });
+  </script>
+</body>
+</html>

@@ -225,6 +225,28 @@ def admin_dashboard():
     return jsonify({"message": "Welcome to Admin Dashboard!"}), 200
 
 
+@auth_bp.route("/verify-otp-dashboard", methods=["POST"])
+def verify_otp_dashboard():
+    try:
+        data = request.get_json()
+        username = data.get("username")
+        otp = data.get("otp")
+
+        if not username or not otp:
+            return jsonify({"error": "Username and OTP required"}), 400
+
+        client = get_mongo_client()
+        db = client["zero_trust_db"]
+        user = db["users"].find_one({"username": username})
+
+        if not user or not verify_totp(user["mfa_secret"], otp):
+            return jsonify({"error": "Invalid OTP"}), 401
+
+        return jsonify({"message": "OTP verified"}), 200
+
+    except Exception as e:
+        return jsonify({"error": "Server error"}), 500
+
 import logging
 
 logging.basicConfig(level=logging.DEBUG)
